@@ -22,4 +22,6 @@ const handleErrors = (err, req, res, next) => {
     res.status(200).json({ data: res.data }); // Send response
 };
 
-module.exports = { handleErrors, handleResponse };
+
+const responseHandler = [handleErrors, handleResponse];
+module.exports = responseHandler;

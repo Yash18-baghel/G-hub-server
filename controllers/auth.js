@@ -17,7 +17,7 @@ const register = async (req, res, next) => {
       password: hashedPassword, // Store the hashed password in the database
     });
 
-    const token = jwt.sign({ ...newUser }, JWT_SECRET_KEY, { expiresIn: JWT_EXPIRES_IN });
+    const token = jwt.sign({ user: newUser }, JWT_SECRET_KEY, { expiresIn: JWT_EXPIRES_IN });
     res.data = { token };
   } catch (error) {
     console.log(error);
@@ -45,8 +45,8 @@ const signIn = async (req, res, next) => {
     if (!isPasswordMatch) {
       throw new Error('Password does not match')
     }
-    const secretKey = 'yourSecretKey';
-    const token = jwt.sign({ ...user }, JWT_SECRET_KEY, { expiresIn: JWT_EXPIRES_IN });
+
+    const token = jwt.sign({ user }, JWT_SECRET_KEY, { expiresIn: JWT_EXPIRES_IN });
     res.data = { token };
 
   } catch (error) {
