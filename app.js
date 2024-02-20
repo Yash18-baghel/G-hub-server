@@ -1,10 +1,13 @@
 const express = require('express');
-const app = express();
 require('dotenv').config()
 const sequelize = require('./config/db');
 const { PORT } = require('./config');
-app.use(express.json())
+const cors = require('cors');
 
+const app = express();
+
+app.use(cors()); // Enable CORS for all routes
+app.use(express.json())
 // Loop through route files and configure routes
 const fs = require('fs');
 const path = require('path');

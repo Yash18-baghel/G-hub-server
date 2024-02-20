@@ -6,7 +6,7 @@ const responseHandler = require('../middleware/responseHandler');
 const { addGameValidator, paginationValidator, sessionActionValidator, paramsValidator } = require('../middleware/validation');
 
 router.route('/')
-    .get(verifyUser, paginationValidator, allGames, responseHandler)
+    .get(paginationValidator, allGames, responseHandler)
     .post(adminV, addGameValidator, addGame, responseHandler);
 
 router.route('/:id')
