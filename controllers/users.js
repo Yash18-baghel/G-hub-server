@@ -1,20 +1,28 @@
 const User = require('../models/User');
+const bcrypt = require('bcrypt');
 
-const index = async (req, res) => {
+const index = async (req, res, next) => {
   try {
-    const users = await User.findAll();
-    res.json(users);
+    const { id } = req.user;
+    const user = await User.findByPk(id);
+    res.data = user;
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).send('Internal Server Error');
+    res.error = { msg: "error" }
   }
+  next();
 };
 
-const create = (req, res) => {
-  res.send('Route 1 Create');
+const allUsers = async (req, res, next) => {
+  try {
+    const user = await User.findAll();
+    res.data = user;
+  } catch (error) {
+    res.error = { msg: "error" }
+  }
+  next();
 };
 
 module.exports = {
   index,
-  create
+  allUsers
 }
