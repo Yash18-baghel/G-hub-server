@@ -2,6 +2,7 @@ const Games = require('../models/Games');
 const Game_sessions = require('../models/Game_sessions');
 const User = require('../models/User');
 const { Op } = require('sequelize');
+// const sequelize = require('../config/db');
 
 const addGame = async (req, res, next) => {
     try {
@@ -290,6 +291,86 @@ const getGameSchedule = async (req, res, next) => {
     next();
 };
 
+const getUserHistory = async (req, res, next) => {
+    const { id: user_id } = req.user;
+
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
+
+        const condition = { where: { user_id } };
+
+        // const rawQuery = `
+        //     SELECT Game_sessions.id, Game_sessions.start_at, Game_sessions.end_at, 
+        //         Game_sessions.status, Game_sessions.createdAt, Game_sessions.updatedAt, 
+        //         Game_sessions.game_id, Game_sessions.user_id, 
+        //         Game.id AS gameId, Game.title AS title 
+        //     FROM Game_sessions 
+        //     INNER JOIN Games AS Game ON Game_sessions.game_id = Game.id 
+        //     WHERE Game_sessions.user_id = :user_id
+        //     ORDER BY Game_sessions.start_at DESC
+        //     LIMIT :offset, :limit;`;
+
+        // const result = await sequelize.query(rawQuery, {
+        //     replacements: { user_id, offset, limit },
+        //     type: Sequelize.QueryTypes.SELECT
+        // });
+
+        const game_ssns = await Game_sessions.findAll({
+            ...condition,
+            order: [['start_at', 'DESC']],
+            include: [{
+                model: Games,
+                as: 'Game', // Use the 'Game' alias for the included model
+                attributes: ['id', 'title']
+            }],
+            raw: true, // Return raw data instead of Sequelize instances
+            offset,
+            limit
+        });
+
+
+
+        const totalGames = await Game_sessions.count({ where: { user_id } });
+        const totalPages = Math.ceil(totalGames / limit);
+
+        res.data = {
+            game_ssns,
+            currentPage: page,
+            totalPages: totalPages,
+            totalGames: totalGames
+        };
+    } catch (error) {
+        res.error = { msg: error.message }
+    }
+    next();
+};
+
+const getUserSessionById = async (req, res, next) => {
+    const { id } = req.params;
+
+    try {
+        const game_ssn = await Game_sessions.findOne({
+            where: {
+                id
+            },
+            include: [{
+                model: Games,
+                as: 'Game',
+                attributes: ['id', 'title']
+            }],
+            raw: true
+        });
+
+        res.data = { game_ssn };
+
+    } catch (error) {
+        res.error = { msg: error.message }
+    }
+    next();
+};
+
 module.exports = {
     addGame,
     allGames,
@@ -299,5 +380,7 @@ module.exports = {
     startGame,
     endGame,
     scheduleGame,
-    getGameSchedule
+    getGameSchedule,
+    getUserHistory,
+    getUserSessionById
 }
