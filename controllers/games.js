@@ -166,11 +166,15 @@ const startGame = async (req, res, next) => {
 }
 
 const endGame = async (req, res, next) => {
-    const { game_id, user_id } = req.params;
+    const { game_id, user_id } = req.body;
 
     try {
         const user = await User.findByPk(user_id);
         const game = await Games.findByPk(game_id);
+        const currentTime = new Date();
+        const updateData = {
+            status: false,
+        }
         const game_ssn = await Game_sessions.findOne({
             where: { game_id, user_id },
             order: [
@@ -178,7 +182,10 @@ const endGame = async (req, res, next) => {
             ]
         });
 
+
         if (!game_ssn || !game_ssn.status) throw new Error("Game Session Not Active!!");
+
+        if (currentTime < game_ssn.end_at) updateData.end_at = currentTime;
 
 
         if (!user) throw new Error("User does not Exists!!");
@@ -186,9 +193,7 @@ const endGame = async (req, res, next) => {
 
         // Find the game with the specified id and update its data
         await Game_sessions.update(
-            {
-                status: false,
-            },
+            updateData,
             {
                 where: {
                     game_id,
@@ -304,15 +309,11 @@ const getActiveGameSchedule = async (req, res, next) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
-        const currentTime = new Date();
 
         const condition = {
             where: {
                 [Op.or]: {
-                    status: true,
-                    end_at: {
-                        [Op.gt]: currentTime // Use Op.gt (greater than) operator
-                    }
+                    status: true
                 }
             }
         }

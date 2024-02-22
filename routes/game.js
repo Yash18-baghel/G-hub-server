@@ -22,8 +22,8 @@ router.route('/schedule')
 router.route('/start')
     .post(adminV, sessionActionValidator, startGame, responseHandler);
 
-router.route('/end/:game_id/:user_id')
-    .delete(verifyUser, endGame, responseHandler);
+router.route('/end')
+    .put(verifyUser, endGame, responseHandler);
 
 router.route('/:id')
     .get(verifyUser, getGame, responseHandler)
