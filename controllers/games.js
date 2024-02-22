@@ -166,7 +166,7 @@ const startGame = async (req, res, next) => {
 }
 
 const endGame = async (req, res, next) => {
-    const { game_id, user_id } = req.body;
+    const { game_id, user_id } = req.params;
 
     try {
         const user = await User.findByPk(user_id);
@@ -188,11 +188,11 @@ const endGame = async (req, res, next) => {
         await Game_sessions.update(
             {
                 status: false,
-                end_at: new Date()
             },
             {
                 where: {
-                    game_id
+                    game_id,
+                    user_id
                 },
             });
 
@@ -244,7 +244,7 @@ const scheduleGame = async (req, res, next) => {
             }
         });
 
-        if (gameSession.status) throw new Error(`Session is Already Active till: ${gameSession.end_at.toLocaleString()}`)
+        if (gameSession?.status) throw new Error(`Session is Already Active till: ${gameSession.end_at.toLocaleString()}`)
 
         if (gameSession) {
             // Update existing record
@@ -275,16 +275,77 @@ const getGameSchedule = async (req, res, next) => {
         const game_ssn = await Game_sessions.findAll({
             where: {
                 game_id: id,
-                start_at: {
+                end_at: {
                     [Op.gt]: currentTime // Use Op.gt (greater than) operator
                 }
             },
+            include: [{
+                model: User,
+                as: 'User',
+                attributes: ['name'],
+            }],
+            raw: true,
             order: [
                 ['start_at', 'DESC']
             ]
         });
 
         res.data = { game_ssn };
+    } catch (error) {
+        res.error = { msg: error.message }
+    }
+    next();
+};
+
+const getActiveGameSchedule = async (req, res, next) => {
+
+    try {
+
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
+        const currentTime = new Date();
+
+        const condition = {
+            where: {
+                [Op.or]: {
+                    status: true,
+                    end_at: {
+                        [Op.gt]: currentTime // Use Op.gt (greater than) operator
+                    }
+                }
+            }
+        }
+        const game_ssns = await Game_sessions.findAll({
+            ...condition,
+            order: [
+                ['start_at', 'DESC']
+            ],
+            include: [{
+                model: Games,
+                as: 'Game', // Use the 'Game' alias for the included model
+                attributes: ['id', 'title'],
+
+            },
+            {
+                model: User,
+                as: 'User', // Use the 'User' alias for the included model
+                attributes: ['id', 'name']
+            }],
+            raw: true,
+            offset,
+            limit
+        });
+
+        const totalGames = await Game_sessions.count(condition);
+        const totalPages = Math.ceil(totalGames / limit);
+
+        res.data = {
+            game_ssns,
+            currentPage: page,
+            totalPages: totalPages,
+            totalGames: totalGames
+        };
     } catch (error) {
         res.error = { msg: error.message }
     }
@@ -324,6 +385,11 @@ const getUserHistory = async (req, res, next) => {
                 model: Games,
                 as: 'Game', // Use the 'Game' alias for the included model
                 attributes: ['id', 'title']
+            },
+            {
+                model: User,
+                as: 'User', // Use the 'User' alias for the included model
+                attributes: ['id', 'name']
             }],
             raw: true, // Return raw data instead of Sequelize instances
             offset,
@@ -359,6 +425,11 @@ const getUserSessionById = async (req, res, next) => {
                 model: Games,
                 as: 'Game',
                 attributes: ['id', 'title']
+            },
+            {
+                model: User,
+                as: 'User', // Use the 'User' alias for the included model
+                attributes: ['id', 'name']
             }],
             raw: true
         });
@@ -381,6 +452,7 @@ module.exports = {
     endGame,
     scheduleGame,
     getGameSchedule,
+    getActiveGameSchedule,
     getUserHistory,
     getUserSessionById
 }
