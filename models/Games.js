@@ -11,6 +11,9 @@ const Games = sequelize.define('Games', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  image: {
+    type: DataTypes.STRING,
+  },
   price_per_hour: {
     type: DataTypes.INTEGER,
     allowNull: false,

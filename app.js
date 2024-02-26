@@ -8,6 +8,7 @@ const app = express();
 
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json())
+app.use(express.static('public'));
 // Loop through route files and configure routes
 const fs = require('fs');
 const path = require('path');

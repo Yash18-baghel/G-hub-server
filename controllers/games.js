@@ -6,11 +6,18 @@ const { Op } = require('sequelize');
 
 const addGame = async (req, res, next) => {
     try {
+
+        if (!req.file) throw new Error("Image Not uploaded!!");
+        
+        const imagePath = req?.file?.path?.split('/');
+        const [remove, ...newImagePath] = imagePath;
+        const image = newImagePath.join('/');
         const { title, price_per_hour, player_count = 1 } = req.body;
         const game = await Games.create({
             title,
             price_per_hour,
             player_count,
+            image,
             start_at: Date.now()
         })
 

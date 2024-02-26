@@ -4,10 +4,11 @@ const { verifyUser, adminV } = require('../middleware/authentication');
 const { addGame, allGames, startGame, deleteGame, editGame, getGame, scheduleGame, endGame, getGameSchedule, getUserHistory, getUserSessionById, getActiveGameSchedule } = require('../controllers/games');
 const responseHandler = require('../middleware/responseHandler');
 const { addGameValidator, paginationValidator, sessionActionValidator, paramsValidator } = require('../middleware/validation');
+const { upload } = require('../config/multer');
 
 router.route('/')
     .get(paginationValidator, allGames, responseHandler)
-    .post(adminV, addGameValidator, addGame, responseHandler);
+    .post(adminV, upload.single('gameImage'), addGameValidator, addGame, responseHandler);
 
 router.route('/user-history')
     .get(verifyUser, paginationValidator, getUserHistory, responseHandler);
